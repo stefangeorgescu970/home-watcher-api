@@ -1,0 +1,62 @@
+language: python
+python: 3.8
+jobs:
+  include:
+  - stage: test
+    script: bash ./buildScripts/run_tests.sh
+  - stage: build-and-deploy
+    script: bash ./buildScripts/prepare_deploy.sh
+    before_deploy:
+    - bash ./buildScripts/install_dependencies.sh
+    - bash ./buildScripts/prepare_aws_acc.sh
+    deploy:
+    - provider: script
+      script: bash ./buildScripts/deploy.sh dev
+      skip_cleanup: true
+      on:
+        branch: development
+    - provider: script
+      script: bash ./buildScripts/upload_artifacts.sh
+      skip_cleanup: true
+      on:
+        all_branches: true
+        condition: "$TRAVIS_BRANCH =~ (^release\\/.*$|^hotfix\\/.*$)"
+    - provider: script
+      script: bash ./buildScripts/deploy.sh stg
+      skip_cleanup: true
+      on:
+        all_branches: true
+        condition: "$TRAVIS_BRANCH =~ (^release\\/.*$|^hotfix\\/.*$)"
+  - stage: promote-release
+    script:
+    - bash ./buildScripts/install_dependencies.sh
+    - bash ./buildScripts/prepare_aws_acc.sh
+    deploy:
+    - provider: script
+      script: bash ./buildScripts/promote_release.sh
+      skip_cleanup: true
+      on:
+        branch: master
+    - provider: releases
+      api_key:
+        secure: ZOWRJMlh5Knq12KjomfriWW2CCajkLfx8E2Btv5oiSL9oCL7ifQueUOtqHNqhWEkgjMdhal4iR6oM47+Ii6q408sB9/N2QRt2c/gQffkq+slw+Yt4S+zs3VUt1E49uTxgy+1EpTJrD7A/CNqyTQ4OBObRnYghruhcBDIZXXdqoxsS3sPi0PgVMjGAIyxvYL66fdsVHlU/qXzYT6eez/J2JyL71Jf/Hj0bED0d3voT4MszjBpMIisvBA2p7KUQxZ5+jAE6O8xK4BN4ngpPJZoMWqFXvAPZg7h8FK72iW6v57r/6AEuiH+YctclfA5kyRkv8MPO6WKc89SAkiQ5743x+1xs1DPVvF8VkehERUx9a4la7BCXsPdFvwsYTuot44kookNI/mVA2wruaOqrwYhtyt7va18QMpbf2nf/+kjH0GPISDoRmB3gmZXsRokLshB2Mn8mukzin+6+ls+34YfxqLkCqAWnWogS/3M/nW52dq/tMnEPFENTetwg5hNE0SRgY3IEzyEMqODluy75ZEzNO9OPxRtRWdgtoWeP812gT4fpoQC5KwhevxHApHZnQl4RN7IN/ns3AhEOfZHmVenacqUCsUbHLM12s42qO9cAHJr1RfcmOavOYdd/ejPkVDfR82wKpAZ2PVSLMGqEfvt3kXvyafpgxw5xBiIAp+Ggms=
+      file_glob: true
+      skip_cleanup: true
+      file: release/*
+      on:
+        repo: stefangeorgescu970/ci-cd-example
+        tags: false # Prevent a second build when tags are pushed to the repository.
+        branch: master
+stages:
+- name: test
+  if: type = pull_request
+- name: build-and-deploy
+  if: "(branch = development OR branch =~ ^release\\/.*$ OR branch =~ ^hotfix\\/.*$) AND type = push"
+- name: promote-release
+  if: branch = master AND type = push
+env:
+  global:
+  - secure: V2RZTTf5N9KBF8cn4bOjQSJvsP5Q5g5kP9oKEz461W5As0iRcgJ7sB3qtMrSQUtp2CwgJWzPiGFDICKo0CgOKwAr6/qZbCjxTm9ODEM5k6DwEsAbIgUfHrsxTjD0B1ZCrHBrUWkPuS289s/96R53zfLSgsQ+zzMvzuUANvX7EqCmOMdsgq265zEimIqBlGW3AkrxcGUK/wp5mMW8ucrm/1c5d1hJmZpdoGzA5WI0+b6YHqjsGmaR0rJmKn7W3z/IfdbeNGhit5pgRjPQcwnFj71knLV08vBktdyhyiKrsa0mZLci2UEEOROjWAe+4lqt1CISTZPHxmJG/CLDfw7Q6ipedcfsP1zu31UfRfpPyb4OcYxUFiWE7iivbWjza2kYgMmJONaQxIzhC7rJIA6u+0+lVIo8dfjEv16aNtssb4mooWBOMshoKC7T0LfJweMjq4DwNmNJCdZtVV67Xhu1i9Sm+7PcoH14vKaxOTHC0qX2HMX/S0Pw4UgM6veRplIQ0OAKGytrtMu1XFjRIG4IcaR4bpaVhSTeiXzTmMTVBmxGNP7vP8mPS9RjTcMboUc00yrTPzn5IhY0KlpRPdamqpA4luP0SqM7o3nBcUqMgmgmtrSgeuR8rjgJYWX+Ve7lJjkmCTyZJGFzpposdq6S27s9gWfJ/BUFuni53xIaNbY=
+  - secure: iz5Y8n22fswRH0+b8pMgofM4s4O7m25C3xpw0Z+Ypy/idh+KfFjNSbBp3NW55LyuLI/VmgjGsp2WB0mVpWfSpq5NFdGSThsw1Rpa3hg27/ZcJiIZu/6vTIP4m16YDP9S3bw9yx2DlL0SoaqgynHClZse+2OnOhOClPrj7/tyZhv481F72jdSmU0x3QLQHdsGK2dFjTOTO/h1Ul3SRLEN8QGM0AVLhk/SGK8w1w/ivYfZexpKqIS+jKqijoQuXtxn61x1ZYdTC6kJgcUF+w2IedZRLyLIfEoSxT34oNeifEM0HnWWjraY7fdKoHqcdg0jrJac7rQB5Z2bt1iiQrjGHplbMeYiRHP5JU4CKouJPspxQfhKqQysH9wbwy/c1w5Ooe0g4mnyZ+A+yJsTZJyXdjqbSwMzehXhVwPBxANwGwdpEV95Cl/0IikakGUDDHvqc4c1BHbTgrYnPhBS6t0cfi3shPlyj2OburnFjssO85m9ZEN6QKjwEbGJ5QbMmr2QRjwn42AzYyn+vJfs7DlwCljwodKPy0njwZdtMM+aDj8/J86w36NMDbRGoUPObXFAoSVwX4GnZHdif44Js5vmaEjrMrsuvQNdwKPxaHW1UjI97XidXxatQAcnXfFzSiP3bk5iGeffTZseJ0VKo5zlQqrA77D03Zjgk2xlfDMkW4c=
+  - secure: PfdMl3zmc59W57Bz8JIoLVFr1+2aTLpo9sRYWnfhF3/sypLwmCoJdPKxIWpSBCEF7KJJ28CgykyHNBkhaUxiZ51y/ChHFJTx/NQ784zxiFCxzkJTi+j5fguO6y2kZds3PSftp0+cMo7s11OJN+M/ozsPQG5nMPXCh5gs5VEbXzyZYORK3a5NyMGEqediXZVxABKWZIneZJwdBTgnqkSJ9us5yNyxD2Y76GaJTKCz5B6sqXdtpgKrjPf1QBzZuHZL6WClhEtR3VcXCY1e462Ko16T2vAWjDvd3qigoRV8gnvEG5hI9enaaphpzVNA3rSJjH4h8vjAoxZjkazFCKQNkNeXfdW8wnuVLBF1ykNFxCt36AzsMAQ8FhVUowC4CTdqiPXyInYRIhQkcgTo8Suc+tBLc+a51nXmp7YES5dGnPCEsX4YkU38X06YQDU5aDVDg1D41L6QrfOHiX7k4sCo/CEg/zPIKW9+62Y5Cg1lBZKZS/leN/wDzozZdAMZ4tS3qDca8njZQ79rblbDgO2mVZYnL3bgvoNeKSbiT7POZKmvgOtraTj0TFdsYw/f0Q+lJIFkObdtkvsTfVWjF+vdTLwPZWwMZxLuM+a1FZu9ClfaF2J6YzPPOhEfPbvyGysR+hb5ypuGrc49o8N7FwNzRhsbyrYiIMVvldhhhSIFZXw=
+  - secure: js62G1OkirgpeMda4mzy69Vg6Nn5bcNiNe2n41YX7O/6ero0ecE2dsxbyWvYU+BIr3dLPtcds2jeJnC+jY4uwWEv8MpnyqhTflG8XX1RPCSPHDi2xC4MXXWpzCiRFdcpLozx4YZGrZl79oVklTS30LCwHZIVf8ufMW/WHWq6GS675np5YYEsfohnssp7X3NKlDQcPt6WrpXjzQa3kNg72IoEcQ8b17wJ+gErpIr6+yYtWZowmIj1YQRBoLgTNehGa9zxypUOHluYYJtN8ACQC+luWS2hMpHeJH2FeVFUzf9/l7NqwamXR/EVrAxykrc+zJfGiYzbUF4JWp/keU9YMiX8ENXWSoJasVf1oMOQIb6luBYPr6XB2cfxtGyjpAgS+5p53GpHXy3G0B+XVF/EElQQmHgpxNjBkTJl7Co/QRKwetygcK0uqEWIqqxlJczRc3vQoaIrIsDL6VJo/BnjSk+/m+PN2cJ5A2Yva33DE2ds/d/lXA3UCbo7624ktsxQrRsi4WfmKlX2ZMePWiQCr7PxqEonklUf5JIG/2AF2+ffbxXytxrIt04IeaRIBZIXNwaI02Ac+R28fdpcwZ4p8xqVwvbIcI3e3UucpJyJzt1suPWdJq35c/psh1fE4sFTjolv0R0vcQp9XtKZnZyqlguCCj0t8Td2pISnj+Bcy8w=
