@@ -62,7 +62,7 @@ def handle_api_event(event):
 
 def handle_login_event(event):
     body = json.loads(event["body"]) 
-    dynamo = boto3.resource('dynamodb').Table('network-service-auth-' + os.environ['ENV'])
+    dynamo = boto3.resource('dynamodb').Table('network-service-auth-' + os.environ['STAGE'])
 
     user = body["username"]
     password = body["password"]
