@@ -37,16 +37,6 @@ jobs:
       skip_cleanup: true
       on:
         branch: master
-    - provider: releases
-      api_key:
-        secure: ZOWRJMlh5Knq12KjomfriWW2CCajkLfx8E2Btv5oiSL9oCL7ifQueUOtqHNqhWEkgjMdhal4iR6oM47+Ii6q408sB9/N2QRt2c/gQffkq+slw+Yt4S+zs3VUt1E49uTxgy+1EpTJrD7A/CNqyTQ4OBObRnYghruhcBDIZXXdqoxsS3sPi0PgVMjGAIyxvYL66fdsVHlU/qXzYT6eez/J2JyL71Jf/Hj0bED0d3voT4MszjBpMIisvBA2p7KUQxZ5+jAE6O8xK4BN4ngpPJZoMWqFXvAPZg7h8FK72iW6v57r/6AEuiH+YctclfA5kyRkv8MPO6WKc89SAkiQ5743x+1xs1DPVvF8VkehERUx9a4la7BCXsPdFvwsYTuot44kookNI/mVA2wruaOqrwYhtyt7va18QMpbf2nf/+kjH0GPISDoRmB3gmZXsRokLshB2Mn8mukzin+6+ls+34YfxqLkCqAWnWogS/3M/nW52dq/tMnEPFENTetwg5hNE0SRgY3IEzyEMqODluy75ZEzNO9OPxRtRWdgtoWeP812gT4fpoQC5KwhevxHApHZnQl4RN7IN/ns3AhEOfZHmVenacqUCsUbHLM12s42qO9cAHJr1RfcmOavOYdd/ejPkVDfR82wKpAZ2PVSLMGqEfvt3kXvyafpgxw5xBiIAp+Ggms=
-      file_glob: true
-      skip_cleanup: true
-      file: release/*
-      on:
-        repo: stefangeorgescu970/ci-cd-example
-        tags: false
-        branch: master
 stages:
 - name: test
   if: type = pull_request
